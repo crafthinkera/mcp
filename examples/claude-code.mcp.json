@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "crafthinkera": {
+      "type": "http",
+      "url": "https://www.crafthinkera.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${CRAFTHINKERA_MCP_TOKEN}"
+      }
+    }
+  }
+}

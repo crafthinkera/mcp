@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "crafthinkera": {
+      "command": "npx",
+      "args": ["-y", "@crafthinkera/mcp"],
+      "env": {
+        "CRAFTHINKERA_MCP_TOKEN": "ctk_replace_with_your_token"
+      }
+    }
+  }
+}

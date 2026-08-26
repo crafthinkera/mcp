@@ -1,0 +1,58 @@
+{
+  "name": "@crafthinkera/mcp",
+  "version": "0.1.0",
+  "description": "Connect an MCP client to CrafThinkERA's physical-production workflow.",
+  "license": "MIT",
+  "author": "CrafThinkERA",
+  "homepage": "https://crafthinkera.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crafthinkera/mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/crafthinkera/mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "manufacturing",
+    "physical-production",
+    "agents"
+  ],
+  "type": "module",
+  "bin": {
+    "crafthinkera-mcp": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "docs",
+    "examples"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "tsx --test test/*.test.ts",
+    "prepublishOnly": "pnpm build && pnpm test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3"
+  }
+}
