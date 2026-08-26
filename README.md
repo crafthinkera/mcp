@@ -50,6 +50,18 @@ Or place the contents of [examples/claude-code.mcp.json](examples/claude-code.mc
 in `.mcp.json`. This is the preferred connection: no local server process and
 no repository clone.
 
+### Codex
+
+```bash
+export CRAFTHINKERA_MCP_TOKEN=ctk_replace_with_your_token
+
+codex mcp add crafthinkera \
+  --url https://www.crafthinkera.com/api/mcp \
+  --bearer-token-env-var CRAFTHINKERA_MCP_TOKEN
+```
+
+The equivalent configuration is in [examples/codex.toml](examples/codex.toml).
+
 ### Claude Desktop, Cursor, or any stdio MCP consumer
 
 Install nothing globally; `npx` downloads the package when the MCP client starts.

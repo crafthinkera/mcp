@@ -1,0 +1,3 @@
+[mcp_servers.crafthinkera]
+url = "https://www.crafthinkera.com/api/mcp"
+bearer_token_env_var = "CRAFTHINKERA_MCP_TOKEN"
