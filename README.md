@@ -12,7 +12,7 @@ Agent: "I need this object manufactured."
  start_project -> inspect_project -> work_on_project
                     |
                     v
- route_production -> prepare_execution
+           prepare_execution
                     |
                     v
              HUMAN APPROVAL
@@ -129,9 +129,6 @@ The agent can then call:
 | `get_project` / `inspect_project` | Reads its current state or full execution view. |
 | `work_on_project` | Advances the next allowed step or answers a blocking question. |
 | `prepare_execution` | Shows the capability graph and available providers. |
-| `get_review_feedback` | Reads the human review state. |
-| `route_production` | Recommends viable physical-production routes for a mesh. |
-| `recall_cases` | Reads matching closed cases from CrafThinkERA’s own record. |
 
 Tool availability and scope are discovered from the remote service at startup.
 An agent can propose, inspect and advance work. It cannot approve production,
@@ -144,11 +141,15 @@ For a custom MCP host, this package exports `parseConfig`,
 `configFromEnvironment`, and `runStdioBridge`. Most users should use the
 configuration above instead of importing the package.
 
-## Status
+## v0 status
 
-The public package is prepared for the production endpoint. The endpoint must
-be deployed and return an authenticated MCP response before publishing this
-package. A successful `npm install` alone is not evidence that an agent can
+The first production server release intentionally exposes only the five tools
+listed above. Production-routing recommendations, case recall, and human-review
+detail are not part of this contract yet. A client must discover tools from the
+remote server rather than assume a larger surface from a newer README.
+
+The endpoint must return an authenticated MCP response before this package is
+published. A successful `npm install` alone is not evidence that an agent can
 reach CrafThinkERA.
 
 ## License

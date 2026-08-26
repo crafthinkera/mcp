@@ -10,7 +10,7 @@ The package only forwards the token to the remote MCP endpoint.
 Use a token with the smallest suitable scope:
 
 - `project:create` starts a project.
-- `project:read` reads a project, review feedback, execution plans, and cases.
+- `project:read` reads a project and its execution plan.
 - `work:run` advances work that does not spend paid provider credit.
 - `work:run:paid` permits a paid provider step when the service allows it.
 
