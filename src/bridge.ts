@@ -5,24 +5,10 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { CrafThinkeraMcpConfig } from "./config.js";
 
 const PACKAGE_VERSION = "0.1.0";
-
-async function listAllTools(client: Client): Promise<Tool[]> {
-  const tools: Tool[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const page = await client.listTools(cursor ? { cursor } : undefined);
-    tools.push(...page.tools);
-    cursor = page.nextCursor;
-  } while (cursor);
-
-  return tools;
-}
 
 /**
  * Presents the remote CrafThinkERA service as a local stdio MCP server.
@@ -36,6 +22,7 @@ export async function runStdioBridge(config: CrafThinkeraMcpConfig): Promise<voi
   );
   const remoteTransport = new StreamableHTTPClientTransport(config.url, {
     requestInit: {
+      redirect: "error",
       headers: {
         Authorization: `Bearer ${config.token}`,
         Accept: "application/json, text/event-stream",
@@ -44,13 +31,12 @@ export async function runStdioBridge(config: CrafThinkeraMcpConfig): Promise<voi
   });
 
   await remote.connect(remoteTransport);
-  const tools = await listAllTools(remote);
 
   const local = new Server(
     { name: "crafthinkera", version: PACKAGE_VERSION },
     { capabilities: { tools: {} } },
   );
-  local.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
+  local.setRequestHandler(ListToolsRequestSchema, async (request) => remote.listTools(request.params));
   local.setRequestHandler(CallToolRequestSchema, async (request) =>
     remote.callTool({
       name: request.params.name,
@@ -59,6 +45,11 @@ export async function runStdioBridge(config: CrafThinkeraMcpConfig): Promise<voi
   );
 
   const localTransport = new StdioServerTransport();
-  localTransport.onclose = () => void remote.close();
-  await local.connect(localTransport);
+  local.onclose = () => void remote.close();
+  try {
+    await local.connect(localTransport);
+  } catch (error) {
+    await remote.close();
+    throw error;
+  }
 }

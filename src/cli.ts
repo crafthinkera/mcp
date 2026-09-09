@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { runStdioBridge } from "./bridge.js";
-import { configFromEnvironment, parseConfig } from "./config.js";
+import { parseConfig } from "./config.js";
 
 function option(name: string): string | undefined {
   const index = process.argv.indexOf(name);
@@ -18,11 +18,14 @@ Environment:
 
 const suppliedUrl = option("--url");
 const suppliedToken = option("--token");
-const config = suppliedUrl || suppliedToken
-  ? parseConfig({ url: suppliedUrl, token: suppliedToken })
-  : configFromEnvironment();
-
-runStdioBridge(config).catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : "CrafThinkERA MCP bridge failed.");
+async function main() {
+  const config = parseConfig({
+    url: suppliedUrl ?? process.env.CRAFTHINKERA_MCP_URL,
+    token: suppliedToken ?? process.env.CRAFTHINKERA_MCP_TOKEN,
+  });
+  await runStdioBridge(config);
+}
+main().catch(() => {
+  console.error("CrafThinkERA MCP connection failed. Check endpoint, token and network access.");
   process.exitCode = 1;
 });

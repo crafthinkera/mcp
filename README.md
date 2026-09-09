@@ -27,8 +27,14 @@ responses between an MCP client and that service. It does not contain routing
 intelligence, provider ranking, production thresholds, case memory, customer
 data, or execution logic.
 
+The npm package is not published. Build the canonical source checkout:
+
 ```bash
-npm install @crafthinkera/mcp
+git clone https://github.com/crafthinkera/mcp.git
+cd mcp
+pnpm install --frozen-lockfile
+pnpm build
+pnpm test
 ```
 
 ## Connect in under five minutes
@@ -64,15 +70,14 @@ The equivalent configuration is in [examples/codex.toml](examples/codex.toml).
 
 ### Claude Desktop, Cursor, or any stdio MCP consumer
 
-Install nothing globally; `npx` downloads the package when the MCP client starts.
-Add this server configuration:
+After building the source checkout, add this server configuration:
 
 ```json
 {
   "mcpServers": {
     "crafthinkera": {
-      "command": "npx",
-      "args": ["-y", "@crafthinkera/mcp"],
+      "command": "node",
+      "args": ["/absolute/path/to/mcp/dist/cli.js"],
       "env": {
         "CRAFTHINKERA_MCP_TOKEN": "ctk_replace_with_your_token"
       }
@@ -128,7 +133,7 @@ The agent can then call:
 | `start_project` | Opens a physical project from an intent. |
 | `get_project` / `inspect_project` | Reads its current state or full execution view. |
 | `work_on_project` | Advances the next allowed step or answers a blocking question. |
-| `prepare_execution` | Shows the capability graph and available providers. |
+| `prepare_execution` | Shows step readiness and dependencies; internal provider choices remain private. |
 
 Tool availability and scope are discovered from the remote service at startup.
 An agent can propose, inspect and advance work. It cannot approve production,
@@ -143,10 +148,10 @@ configuration above instead of importing the package.
 
 ## v0 status
 
-The first production server release intentionally exposes only the five tools
-listed above. Production-routing recommendations, case recall, and human-review
-detail are not part of this contract yet. A client must discover tools from the
-remote server rather than assume a larger surface from a newer README.
+The table describes the base project contract. Discover tools at runtime:
+coordinated server releases may add quote requests and job readback. The connector
+does not assume a tool count or manufacture an approval. A production job awaiting
+a maker is not proof of manufacturing or delivery.
 
 The endpoint must return an authenticated MCP response before this package is
 published. A successful `npm install` alone is not evidence that an agent can

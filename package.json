@@ -43,7 +43,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "tsx --test test/*.test.ts",
+    "test": "tsx --test test/*.test.ts && node --test test/*.test.mjs",
     "prepublishOnly": "pnpm build && pnpm test"
   },
   "dependencies": {

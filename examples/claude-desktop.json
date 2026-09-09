@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "crafthinkera": {
-      "command": "npx",
-      "args": ["-y", "@crafthinkera/mcp"],
+      "command": "node",
+      "args": ["/absolute/path/to/mcp/dist/cli.js"],
       "env": {
         "CRAFTHINKERA_MCP_TOKEN": "ctk_replace_with_your_token"
       }

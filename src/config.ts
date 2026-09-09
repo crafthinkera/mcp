@@ -30,6 +30,9 @@ export function parseConfig(input: {
     throw new CrafThinkeraMcpConfigError("CRAFTHINKERA_MCP_URL must be a valid URL.");
   }
 
+  if (url.username || url.password || url.search || url.hash) {
+    throw new CrafThinkeraMcpConfigError("MCP URL must not contain credentials, query parameters or a fragment.");
+  }
   const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
   if (url.protocol !== "https:" && !(local && url.protocol === "http:")) {
     throw new CrafThinkeraMcpConfigError(
