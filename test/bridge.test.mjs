@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { Client } from '@modelcontextprotocol/client';
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { parseConfig } from '../dist/config.js';
 
 test('rejects remote HTTP and credentials in URLs', () => {
@@ -13,7 +13,7 @@ test('rejects remote HTTP and credentials in URLs', () => {
   assert.equal(parseConfig({token:' ctk_test '}).token, 'ctk_test');
 });
 
-test('real stdio client initializes over HTTP, forwards pagination and tool errors', {timeout: 15000}, async () => {
+test('real stdio client initializes over HTTP, aggregates lists and forwards explicit pagination and tool errors', {timeout: 15000}, async () => {
   const requests = [];
   const server = createServer(async (req, res) => {
     assert.equal(req.headers.authorization, 'Bearer ctk_fixture-token');
@@ -41,7 +41,9 @@ test('real stdio client initializes over HTTP, forwards pagination and tool erro
   let stderr = ''; transport.stderr?.on('data', chunk => stderr += chunk);
   try {
     await client.connect(transport);
-    const first = await client.listTools();
+    const all = await client.listTools();
+    assert.deepEqual(all.tools.map(tool => tool.name), ['first', 'second']);
+    const first = await client.listTools({cursor:'page1'});
     assert.equal(first.nextCursor, 'page2');
     assert.equal((await client.listTools({cursor:first.nextCursor})).tools[0].name, 'second');
     const result = await client.callTool({name:'first',arguments:{intent:'make a fixture'}});

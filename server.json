@@ -48,7 +48,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Optional hosted CrafThinkERA bearer token. Format: Bearer ctk_...",
+          "description": "Required for the hosted remote endpoint. Format: Bearer ctk_...",
           "isRequired": true,
           "isSecret": true
         }

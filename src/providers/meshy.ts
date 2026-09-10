@@ -1,3 +1,5 @@
+import { providerErrorCode, providerHttpError } from "./provider-error.js";
+
 const BASE = "https://api.meshy.ai/openapi/v1";
 const MAX_IMAGES = 4;
 const MAX_GLB_BYTES = 300 * 1024 * 1024;
@@ -55,8 +57,13 @@ export async function createMeshyTask(input: {
   });
 
   if (!response.ok) {
-    const detail = (await response.text().catch(() => "")).slice(0, 300);
-    throw new Error(`meshy_create_failed:${response.status}:${detail}`);
+    const detail = await response.text().catch(() => "");
+    throw providerHttpError({
+      provider: "meshy",
+      operation: "create",
+      status: response.status,
+      detail,
+    });
   }
   const json = (await response.json()) as { result?: string };
   if (!json.result) throw new Error("meshy_missing_task_id");
@@ -81,7 +88,7 @@ export async function getMeshyTask(input: {
     progress: typeof raw.progress === "number" ? raw.progress : undefined,
     error:
       typeof (raw.task_error as { message?: string } | undefined)?.message === "string"
-        ? (raw.task_error as { message: string }).message
+        ? providerErrorCode((raw.task_error as { message: string }).message)
         : undefined,
     glbUrl: typeof urls.glb === "string" ? urls.glb : undefined,
     consumedCredits:

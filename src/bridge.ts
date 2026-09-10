@@ -1,11 +1,6 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import { Server } from "@modelcontextprotocol/server";
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { requireRemoteToken, type CrafThinkeraMcpConfig } from "./config.js";
 
 const PACKAGE_VERSION = "0.3.0";
@@ -36,14 +31,14 @@ export async function runStdioBridge(config: CrafThinkeraMcpConfig): Promise<voi
     { name: "crafthinkera", version: PACKAGE_VERSION },
     { capabilities: { tools: {} } },
   );
-  local.setRequestHandler(ListToolsRequestSchema, async (request) => {
+  local.setRequestHandler("tools/list", async (request) => {
     const result = await remote.listTools(request.params);
     return {
       tools: result.tools,
       ...(result.nextCursor ? { nextCursor: result.nextCursor } : {}),
     };
   });
-  local.setRequestHandler(CallToolRequestSchema, async (request) =>
+  local.setRequestHandler("tools/call", async (request) =>
     remote.callTool({ name: request.params.name, arguments: request.params.arguments }),
   );
 

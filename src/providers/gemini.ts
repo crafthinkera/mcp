@@ -1,3 +1,5 @@
+import { providerHttpError } from "./provider-error.js";
+
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const MAX_ATTEMPTS = 3;
 
@@ -93,8 +95,13 @@ export async function generateGeminiImage(input: {
     });
 
     if (!response.ok) {
-      const detail = (await response.text().catch(() => "")).slice(0, 300);
-      throw new Error(`gemini_image_failed:${response.status}:${detail}`);
+      const detail = await response.text().catch(() => "");
+      throw providerHttpError({
+        provider: "gemini",
+        operation: "image",
+        status: response.status,
+        detail,
+      });
     }
 
     const raw = (await response.json()) as GeminiInteraction;
