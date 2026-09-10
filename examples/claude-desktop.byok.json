@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "crafty": {
+      "command": "npx",
+      "args": ["-y", "@crafthinkera/mcp"],
+      "env": {
+        "GEMINI_API_KEY": "replace_or_remove",
+        "MESHY_API_KEY": "replace_or_remove"
+      }
+    }
+  }
+}

@@ -10,13 +10,13 @@ test('rejects remote HTTP and credentials in URLs', () => {
   for (const url of ['http://example.com/mcp', 'https://user:secret@example.com/mcp', 'https://example.com/mcp?token=secret', 'https://example.com/mcp#secret']) {
     assert.throws(() => parseConfig({url, token: 'test'}));
   }
-  assert.equal(parseConfig({token:' test '}).token, 'test');
+  assert.equal(parseConfig({token:' ctk_test '}).token, 'ctk_test');
 });
 
 test('real stdio client initializes over HTTP, forwards pagination and tool errors', {timeout: 15000}, async () => {
   const requests = [];
   const server = createServer(async (req, res) => {
-    assert.equal(req.headers.authorization, 'Bearer fixture-token');
+    assert.equal(req.headers.authorization, 'Bearer ctk_fixture-token');
     if (req.method !== 'POST') { res.writeHead(405).end(); return; }
     let raw = ''; for await (const chunk of req) raw += chunk;
     const message = JSON.parse(raw); requests.push(message);
@@ -34,8 +34,8 @@ test('real stdio client initializes over HTTP, forwards pagination and tool erro
   const client = new Client({name:'test',version:'1'});
   const transport = new StdioClientTransport({
     command: process.execPath,
-    args: [fileURLToPath(new URL('../dist/cli.js', import.meta.url)), '--url', `http://127.0.0.1:${server.address().port}/mcp`],
-    env: {...process.env, CRAFTHINKERA_MCP_TOKEN:'fixture-token'},
+    args: [fileURLToPath(new URL('../dist/cli.js', import.meta.url)), '--remote', '--url', `http://127.0.0.1:${server.address().port}/mcp`],
+    env: {...process.env, CRAFTHINKERA_MCP_TOKEN:'ctk_fixture-token'},
     stderr:'pipe',
   });
   let stderr = ''; transport.stderr?.on('data', chunk => stderr += chunk);

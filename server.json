@@ -1,0 +1,58 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.crafthinkera/crafty-mcp",
+  "title": "Crafty MCP",
+  "description": "Local BYOK product creation plus optional CrafThinkERA physical production handoff.",
+  "repository": {
+    "url": "https://github.com/crafthinkera/mcp",
+    "source": "github"
+  },
+  "version": "0.3.0",
+  "websiteUrl": "https://www.crafthinkera.com/en/developers",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@crafthinkera/mcp",
+      "runtimeHint": "npx",
+      "version": "0.3.0",
+      "environmentVariables": [
+        {
+          "name": "GEMINI_API_KEY",
+          "description": "Your Gemini API key. Optional; enables local concept and reference-view generation.",
+          "format": "string",
+          "isRequired": false
+        },
+        {
+          "name": "MESHY_API_KEY",
+          "description": "Your Meshy API key. Optional; enables local image-to-3D generation.",
+          "format": "string",
+          "isRequired": false
+        },
+        {
+          "name": "CRAFTHINKERA_MCP_TOKEN",
+          "description": "Optional CrafThinkERA bearer token for hosted/network operations.",
+          "format": "string",
+          "isRequired": false
+        }
+      ],
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://www.crafthinkera.com/api/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Optional hosted CrafThinkERA bearer token. Format: Bearer ctk_...",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
