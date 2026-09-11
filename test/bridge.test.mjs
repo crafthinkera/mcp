@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { mkdtempSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
@@ -55,5 +58,31 @@ test('real stdio client initializes over HTTP, aggregates lists and forwards exp
     await client.close();
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test('default argv lists local BYOK tools, not hosted commerce tools', {timeout: 15000}, async () => {
+  const client = new Client({name:'test-local',version:'1'});
+  const transport = new StdioClientTransport({
+    command: process.execPath,
+    args: [fileURLToPath(new URL('../dist/cli.js', import.meta.url))],
+    env: {
+      PATH: process.env.PATH,
+      HOME: process.env.HOME,
+      CRAFTHINKERA_HOME: mkdtempSync(join(tmpdir(), 'crafty-local-')),
+    },
+    stderr: 'pipe',
+  });
+  try {
+    await client.connect(transport);
+    const names = (await client.listTools()).tools.map(tool => tool.name);
+    assert.ok(names.includes('crafty_status'));
+    assert.ok(names.includes('generate_concept'));
+    assert.ok(names.includes('generate_geometry'));
+    assert.ok(!names.includes('request_quote'));
+    assert.ok(!names.includes('get_production_job'));
+    assert.ok(!names.includes('prepare_production_order'));
+  } finally {
+    await client.close();
   }
 });
