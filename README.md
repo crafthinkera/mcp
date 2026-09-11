@@ -1,161 +1,177 @@
-# CrafThinkERA MCP
+<!-- mcp-name: com.crafthinkera/crafty-mcp -->
 
-Give an agent a path from an instruction to a physical-production workflow.
+# Crafty MCP
+
+Give an agent tools for the part between **"make this"** and a real physical object.
+
+The default runtime is local and BYOK. Your Gemini and Meshy keys stay on your machine and go only to those providers. A CrafThinkERA token is optional until you want to cross into hosted/network operations.
 
 ```text
-Agent: "I need this object manufactured."
-                    |
-                    v
-             CrafThinkERA MCP
-                    |
-                    v
- start_project -> inspect_project -> work_on_project
-                    |
-                    v
-           prepare_execution
-                    |
-                    v
-             HUMAN APPROVAL
-                    |
-                    v
-          Physical production
+intent
+  |
+  v
+local project
+  |
+  +--> Gemini (your key) -> concept -> separate reference views
+  |
+  +--> Meshy  (your key) -> GLB
+  |
+  v
+physical handoff
+  |
+  v
+CrafThinkERA -> quote -> human approval -> payment -> production
 ```
 
-CrafThinkERA is the private service behind this connector. This package is a
-thin MCP bridge: it carries transport, authentication, schemas, validation and
-responses between an MCP client and that service. It does not contain routing
-intelligence, provider ranking, production thresholds, case memory, customer
-data, or execution logic.
+Crafty is not another model. The open-source runtime handles the client edge, local project state, provider adapters and public artifact contracts. CrafThinkERA keeps routing intelligence, commercial state, maker operations and production execution private.
 
-The npm package is not published. Build the canonical source checkout:
+## Run it
+
+Once the package is published:
 
 ```bash
-git clone https://github.com/crafthinkera/mcp.git
-cd mcp
-pnpm install --frozen-lockfile
-pnpm build
-pnpm test
+npx -y @crafthinkera/mcp doctor
 ```
 
-## Connect in under five minutes
-
-Ask a CrafThinkERA operator for an agent token. Keep it in an environment
-variable, never in a checked-in config file.
-
-### Direct remote HTTP — Claude Code and compatible clients
+Use your own provider keys:
 
 ```bash
-export CRAFTHINKERA_MCP_TOKEN=ctk_replace_with_your_token
+export GEMINI_API_KEY="..."
+export MESHY_API_KEY="..."
 
-claude mcp add --transport http crafthinkera \
-  https://www.crafthinkera.com/api/mcp \
-  --header "Authorization: Bearer $CRAFTHINKERA_MCP_TOKEN"
+npx -y @crafthinkera/mcp
 ```
 
-Or place the contents of [examples/claude-code.mcp.json](examples/claude-code.mcp.json)
-in `.mcp.json`. This is the preferred connection: no local server process and
-no repository clone.
+The process speaks MCP over stdio, so normally an MCP host launches it for you. `doctor` is the human-readable sanity check. For Codex, use `examples/codex.byok.toml`; it forwards the key *names* from your local environment instead of writing secret values into config.
 
-### Codex
-
-```bash
-export CRAFTHINKERA_MCP_TOKEN=ctk_replace_with_your_token
-
-codex mcp add crafthinkera \
-  --url https://www.crafthinkera.com/api/mcp \
-  --bearer-token-env-var CRAFTHINKERA_MCP_TOKEN
-```
-
-The equivalent configuration is in [examples/codex.toml](examples/codex.toml).
-
-### Claude Desktop, Cursor, or any stdio MCP consumer
-
-After building the source checkout, add this server configuration:
+For example, a stdio host can run:
 
 ```json
 {
   "mcpServers": {
-    "crafthinkera": {
-      "command": "node",
-      "args": ["/absolute/path/to/mcp/dist/cli.js"],
+    "crafty": {
+      "command": "npx",
+      "args": ["-y", "@crafthinkera/mcp"],
       "env": {
-        "CRAFTHINKERA_MCP_TOKEN": "ctk_replace_with_your_token"
+        "GEMINI_API_KEY": "${GEMINI_API_KEY}",
+        "MESHY_API_KEY": "${MESHY_API_KEY}"
       }
     }
   }
 }
 ```
 
-The package starts a local stdio bridge, discovers the remote tools for this
-token, and forwards calls over HTTPS. See the ready-to-copy
-[Claude Desktop](examples/claude-desktop.json) and
-[Cursor](examples/cursor.mcp.json) examples.
+## Local tools
 
-For a local development service, add `CRAFTHINKERA_MCP_URL`:
+The v0.3 local runtime exposes:
 
-```json
-"env": {
-  "CRAFTHINKERA_MCP_URL": "http://localhost:3001/api/mcp",
-  "CRAFTHINKERA_MCP_TOKEN": "ctk_replace_with_your_token"
-}
+- `crafty_status` — provider readiness, never secret values.
+- `start_project` — durable local project state under `~/.crafthinkera`.
+- `inspect_project` — artifacts, checksums and provider jobs.
+- `generate_concept` — one canonical image through your Gemini key.
+- `generate_reference_views` — four **separate** identity-consistent views; never a contact sheet.
+- `generate_geometry` — start Meshy image-to-3D with your Meshy key.
+- `check_geometry` — poll once and save the GLB locally when ready.
+- `check_crafthinkera_connection` — optional read-only check of a hosted bearer token.
+
+Do not hardcode this list in an agent. Use MCP `tools/list` at runtime.
+
+## Why separate views matter
+
+The geometry input contract is intentionally boring:
+
+```text
+front.jpg
+left.jpg
+back.jpg
+right.jpg
 ```
 
-HTTP is accepted only for `localhost`; all other endpoints must use HTTPS.
+Each file contains exactly one view of the same object. A contact sheet can make a 3D model interpret the sheet as a scene containing several objects. Crafty never feeds a contact sheet into Meshy.
 
-## What an agent actually calls
+Meshy's API accepts base64 Data URIs, so the local runtime does not need to upload your reference images to CrafThinkERA or a public bucket before geometry generation.
 
-Start with the user’s physical intent:
+## CrafThinkERA network
 
-```json
-{
-  "tool": "start_project",
-  "arguments": {
-    "intent": "Produce a 3D printed replacement enclosure for this device",
-    "locale": "en"
-  }
-}
+Local BYOK does not require `CRAFTHINKERA_MCP_TOKEN`.
+
+When you have a token, you can verify the hosted MCP connection with `check_crafthinkera_connection`. The existing hosted endpoint remains:
+
+```text
+https://www.crafthinkera.com/api/mcp
 ```
 
-The real response shape is:
+The final **local-artifact -> CrafThinkERA quote** import contract is deliberately not faked in v0.3. The hosted commercial Core currently quotes assets already stored inside a CrafThinkERA project. The next network milestone is a content-addressed handoff/upload flow that imports a local manifest + asset hashes, revalidates the files server-side, and only then allows quoting.
 
-```json
-{
-  "projectId": "req_…",
-  "productionStage": "INTAKE",
-  "next": "Call work_on_project to have CrafThinkERA interpret it."
-}
+That boundary matters: a locally generated GLB is not automatically production-ready.
+
+## Hosted bridge compatibility
+
+If you explicitly want the old thin bridge behavior:
+
+```bash
+export CRAFTHINKERA_MCP_TOKEN="ctk_..."
+npx -y @crafthinkera/mcp --remote
 ```
 
-The agent can then call:
+In default mode the token is optional.
 
-| Tool | What it does |
-| --- | --- |
-| `start_project` | Opens a physical project from an intent. |
-| `get_project` / `inspect_project` | Reads its current state or full execution view. |
-| `work_on_project` | Advances the next allowed step or answers a blocking question. |
-| `prepare_execution` | Shows step readiness and dependencies; internal provider choices remain private. |
+## Security model
 
-Tool availability and scope are discovered from the remote service at startup.
-An agent can propose, inspect and advance work. It cannot approve production,
-choose a route that commits materials, or sign a case record. Those are human
-boundaries enforced by the private service.
+Provider keys are read from environment variables and are never returned by MCP tools or written into project manifests. Local projects use generated IDs and generated filenames; project IDs and asset filenames are validated before filesystem access. Meshy output downloads are restricted to HTTPS Meshy asset hosts.
 
-## Package API
+Physical side effects stay behind CrafThinkERA's private Core. Quote, approval, payment and production are not inferred from local provider success.
 
-For a custom MCP host, this package exports `parseConfig`,
-`configFromEnvironment`, and `runStdioBridge`. Most users should use the
-configuration above instead of importing the package.
+## Open / private boundary
 
-## v0 status
+Open here:
 
-The table describes the base project contract. Discover tools at runtime:
-coordinated server releases may add quote requests and job readback. The connector
-does not assume a tool count or manufacture an approval. A production job awaiting
-a maker is not proof of manufacturing or delivery.
+```text
+MCP runtime + transport
+BYOK provider adapters
+local project/artifact format
+public tool schemas
+client examples
+connection diagnostics
+```
 
-The endpoint must return an authenticated MCP response before this package is
-published. A successful `npm install` alone is not evidence that an agent can
-reach CrafThinkERA.
+Private in CrafThinkERA:
+
+```text
+provider/routing policy
+cost + quality policy
+commercial state
+maker selection
+production operations
+customer data
+```
+
+The split is intentional.
+
+## Development
+
+```bash
+git clone https://github.com/crafthinkera/mcp.git
+cd mcp
+pnpm install --frozen-lockfile
+pnpm check
+pnpm test
+pnpm build
+```
+
+Localhost is only for developing the hosted bridge itself; ordinary BYOK users do not need to run a CrafThinkERA web server.
+
+## Discovery
+
+```text
+Repo      https://github.com/crafthinkera/mcp
+Remote    https://www.crafthinkera.com/api/mcp
+Discovery https://www.crafthinkera.com/.well-known/mcp.json
+Skill     https://www.crafthinkera.com/skills/crafthinkera/SKILL.md
+LLMs      https://www.crafthinkera.com/llms.txt
+```
+
+Registry identity: `com.crafthinkera/crafty-mcp`.
 
 ## License
 

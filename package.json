@@ -1,7 +1,7 @@
 {
   "name": "@crafthinkera/mcp",
-  "version": "0.1.0",
-  "description": "Connect an MCP client to CrafThinkERA's physical-production workflow.",
+  "version": "0.3.0",
+  "description": "Local BYOK MCP runtime for agent-native physical product creation, with optional CrafThinkERA production handoff.",
   "license": "MIT",
   "author": "CrafThinkERA",
   "homepage": "https://crafthinkera.com",
@@ -17,7 +17,10 @@
     "model-context-protocol",
     "manufacturing",
     "physical-production",
-    "agents"
+    "agents",
+    "byok",
+    "meshy",
+    "gemini"
   ],
   "type": "module",
   "bin": {
@@ -36,19 +39,25 @@
     "README.md",
     "LICENSE",
     "docs",
-    "examples"
+    "examples",
+    "server.json"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "tsx --test test/*.test.ts && node --test test/*.test.mjs",
-    "prepublishOnly": "pnpm build && pnpm test"
+    "check": "tsc -p tsconfig.json",
+    "test": "tsx --test test/*.test.ts && pnpm build && node --test test/*.test.mjs",
+    "prepack": "pnpm build && pnpm test"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "zod": "^3.25.67"
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

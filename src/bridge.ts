@@ -1,21 +1,16 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import type { CrafThinkeraMcpConfig } from "./config.js";
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import { Server } from "@modelcontextprotocol/server";
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
+import { requireRemoteToken, type CrafThinkeraMcpConfig } from "./config.js";
 
-const PACKAGE_VERSION = "0.1.0";
+const PACKAGE_VERSION = "0.3.0";
 
 /**
- * Presents the remote CrafThinkERA service as a local stdio MCP server.
- * It never makes a production decision: schemas and calls are forwarded to the
- * authenticated HTTPS service unchanged.
+ * Optional compatibility mode: present the hosted CrafThinkERA service as a
+ * local stdio MCP server. The default CLI mode is now local BYOK.
  */
 export async function runStdioBridge(config: CrafThinkeraMcpConfig): Promise<void> {
+  const token = requireRemoteToken(config);
   const remote = new Client(
     { name: "crafthinkera-mcp-bridge", version: PACKAGE_VERSION },
     { capabilities: {} },
@@ -24,7 +19,7 @@ export async function runStdioBridge(config: CrafThinkeraMcpConfig): Promise<voi
     requestInit: {
       redirect: "error",
       headers: {
-        Authorization: `Bearer ${config.token}`,
+        Authorization: `Bearer ${token}`,
         Accept: "application/json, text/event-stream",
       },
     },
@@ -36,12 +31,15 @@ export async function runStdioBridge(config: CrafThinkeraMcpConfig): Promise<voi
     { name: "crafthinkera", version: PACKAGE_VERSION },
     { capabilities: { tools: {} } },
   );
-  local.setRequestHandler(ListToolsRequestSchema, async (request) => remote.listTools(request.params));
-  local.setRequestHandler(CallToolRequestSchema, async (request) =>
-    remote.callTool({
-      name: request.params.name,
-      arguments: request.params.arguments,
-    }),
+  local.setRequestHandler("tools/list", async (request) => {
+    const result = await remote.listTools(request.params);
+    return {
+      tools: result.tools,
+      ...(result.nextCursor ? { nextCursor: result.nextCursor } : {}),
+    };
+  });
+  local.setRequestHandler("tools/call", async (request) =>
+    remote.callTool({ name: request.params.name, arguments: request.params.arguments }),
   );
 
   const localTransport = new StdioServerTransport();
